@@ -1,7 +1,7 @@
 ---
 name: one-person-company
-description: "一人公司" 全栈开发 Harness — 多Agent三阶段闭环协作。复杂度分级自动分流，预澄清→红蓝辩论→TDD→复盘宪法。Codex写代码，Hermes管流程。
-version: 3.0
+description: "一人公司" 全栈开发 Harness — 多Agent三阶段闭环协作。复杂度分级自动分流，预澄清→维度拆分+并行红蓝辩论→TDD→复盘宪法。Codex写代码，Hermes管流程。
+version: 3.1
 phase: stable
 ---
 
@@ -13,12 +13,14 @@ phase: stable
 
 用户说需求 → 复杂度判定（见 references/complexity-grading.md）→ 分三路：
 
-| 管道 | 复杂度 | 预澄清 | 辩论 | 开发 | QA | 复盘 |
-|------|--------|--------|------|------|----|------|
-| L1 | 简单 | 1轮 | 跳过 | Hermes直接写 | code-qa+func-qa独立 | 跳过 |
-| L2 | 中等 | 必走 | 1轮（裁判可扩至2轮） | Codex TDD | code-qa+func-qa独立（缩减版） | 可选 |
-| L3 | 复杂 | 必走 | 2轮+裁决 | Codex TDD | code-qa+func-qa独立（完整版） | 必提醒 |
+| 管道 | 复杂度 | 预澄清 | 维度拆分 | 辩论 | 开发 | QA | 复盘 |
+|------|--------|--------|----------|------|------|----|------|
+| L1 | 简单 | 1轮 | 跳过 | 跳过 | Hermes直接写 | code-qa+func-qa独立 | 跳过 |
+| L2 | 中等 | 必走 | 必走 | 并行1轮/维度 | Codex TDD | code-qa+func-qa独立（缩减版） | 可选 |
+| L3 | 复杂 | 必走 | 必走 | 并行1-2轮/维度+裁决 | Codex TDD | code-qa+func-qa独立（完整版） | 必提醒 |
 
+- 维度拆分：3-7个独立维度，领域模板注入默认值（改错优于填空）
+- 并行辩论：每个维度启动独立子Agent（delegate_task），防注意力偏斜遗漏
 - 验收链（code-qa + func-qa）所有管道不可跳过、不可合并
 - L1 QA 失败 ≥2 次自动降级 L2
 
@@ -37,16 +39,19 @@ phase: stable
 |------|------|----------|
 | 辩论结束 | validate_debate_output.py | 模块一产出辩论JSON后 |
 | 规范完成 | check_testability.py | 规范生成后 |
+| 需求完整性 | 对照表（module-1 Phase 3.5） | 裁决后 |
 | 模块二启动 | validate_execution_manifest.py | 执行清单注入前 |
 | 验收结束 | harness_auditor.py --pipeline | 验收链完成后 |
 
 ## 三步调度
 
-**Step 0: 预澄清。** 委托计划Agent（references/agent-roster/planner-agent.md），反复 QA 直到 status=ready，产出《商议摘要》。L1 项目 1 轮后直接进入开发。
+**Step 0: 预澄清。** 委托计划Agent（references/agent-roster/planner-agent.md），反复 QA 直到 status=ready，产出《商议摘要》。笼统需求匹配领域模板（references/domain-templates.md）注入默认值。L1 项目 1 轮后直接进入开发。
 
-**Step 1: 需求澄清。** 加载 references/workflows/module-1-clarify.md 驱动红蓝辩论 + 规范生成 → 产 JSON 辩论输出 + 《需求规格说明书》→ 节点门1+2 → 交用户确认。
+**Step 1: 需求澄清。** 加载 references/workflows/module-1-clarify.md → 维度拆分 → 并行辩论（delegate_task）→ 维度聚合 → 节点门1+2 → 需求完整性对照 → 交用户确认。
 
 **Step 2: TDD 开发。** 加载 references/workflows/module-2-tdd.md → 节点门3 → 按管道分发 → 验收链 → 审计闸门 → 交付。
+
+⚠️ 模块二硬约束（C10）：Hermes统筹不得使用 write_file/patch/skill_manage(write_file) 直接写入模块二产出物。开发和验收必须通过 delegate_task 派发给独立Agent执行。统筹只做调度、收集报告、按报告放行——不替代开发Agent或验收Agent。即使产出物是"纯配置文件/JSON schema/markdown"，流程规则优先于效率判定。
 
 **Step 3: 复盘。** 提醒用户。同意则加载 references/workflows/module-3-review.md → 复盘辩论 → 自动生成宪法草案至 proposals.md。
 
@@ -61,6 +66,12 @@ phase: stable
 协作纪律 → references/protocols/
 宪法记录 → references/constitution/
 复杂度标准 → references/complexity-grading.md
+维度模板 → references/domain-templates.md
 JSON 契约 → references/constitution/data-contract.md
 
 按需加载单文件，禁止一次性加载全部。
+
+## 已知陷阱
+
+- 不要在模块二中评估"这个任务太简单不值得调 Codex"来决定跳过 delegate_task。L1 管道的"Hermes直接写"仅适用于满足 L1 判据的项目（≤3文件/单一技术栈/无用户产品/无新依赖），不适用于 Harness 自身的框架级重构。C10 规则：流程规则优先于效率判定。任何时候怀疑"是不是该派发出去"——派发。
+- 模块一维度拆分是硬性要求（C11），不可因为是"简单项目"就跳过。即使只有一个维度也必须显式声明。
