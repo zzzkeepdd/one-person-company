@@ -1,9 +1,21 @@
-# 一人公司 (One-Person Company)
+# 一人公司 Harness v3.0 (One-Person Company)
 
 > A reusable AI collaboration harness that makes Hermes + Codex work like a real dev team.
 > 一个可复用的 AI 协作编排框架，让你的 Hermes + Codex 像一支真正的开发团队那样工作。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+---
+
+## v3.0 Highlights / 亮点
+
+| Feature | What |
+|---------|------|
+| **JSON 标准接口** | 模块间强制 JSON schema，辩论输出 + 执行清单双校验 |
+| **信息瓶颈** | 模块一→模块二只传 ~200 token JSON，按需回查 spec |
+| **三级管道 (L1/L2/L3)** | L1 超轻（Hermes直写不调Codex）→ L2 辩论1轮 → L3 完整流程 |
+| **节点门** | 辩论结束/规范生成/验收结束三处硬闸门，不通过不进下一阶段 |
+| **宪法 v1.3** | 原子组保护 + 半自动草案生成 + M01 immutable + C10 多Agent合作强制 |
 
 ---
 
@@ -49,12 +61,16 @@ A **Skill** is a long document the AI reads once and may selectively ignore — 
 User / 用户
 ├── PlannerAgent ──── Pre-clarification ──── QA rounds until ready
 │      ├── DebateJudge + Red + Blue + Analyst ── Module 1
+│      │      ├── validate_debate_output.py (节点门1: JSON schema)
+│      │      └── check_testability.py (节点门2: 验收标准可测性)
 │      └── SpecGenerator ── Spec + Acceptance Criteria
 ├── Codex Dev Team ── TDD ──── AI Programmer + Executor + Frontend
+│      ├── validate_execution_manifest.py (节点门3: 执行清单校验)
 │      ├── Code QA (integration tests)
 │      └── Func QA (E2E tests + browser walkthrough)
-│      └── Auditor Script ── hard gate: all reports present?
+│      └── harness_auditor.py ── 最终闸门 (--pipeline l1/l2/l3)
 └── RetroJudge ── Retro Debate ── Prosecution vs Defense → Constitution update
+                            └── proposals.md (草案暂存 → 人工确认 → 合并进宪法)
 ```
 
 Hermes (DeepSeek V4) plans and reviews. Codex (GPT-5.5) executes code. Connected via MCP protocol with shared project folder as state hub.
@@ -87,15 +103,27 @@ cp -r one-person-company ~/.hermes/skills/
 
 ```
 one-person-company/
-├── SKILL.md                    # Entry — 3-step dispatch (≤40 lines)
+├── SKILL.md                        # Entry — 3-step dispatch (≤40 lines)
+├── schemas/                        # v3.0 JSON 接口定义
+│   ├── debate-output.schema.json
+│   └── execution-manifest.schema.json
 ├── references/
-│   ├── agent-roster/           # 14 agent prompts + rules + red lines
-│   ├── workflows/              # Module 1-3 step-by-step flows
-│   ├── protocols/              # Communication, lifecycle, handover, cost budget, prerequisites
-│   └── constitution/           # Management rules + violation records (dynamic)
+│   ├── agent-roster/               # 14 agent prompts + rules + red lines
+│   ├── workflows/                  # Module 1-3 step-by-step flows
+│   ├── protocols/                  # Communication, lifecycle, handover
+│   ├── data-contract.md            # v3.0 JSON 接口数据契约
+│   ├── vague-words.txt             # v3.0 模糊词黑名单
+│   └── constitution/               # Management rules + proposals.md
 ├── scripts/
-│   └── harness_auditor.py      # Hard gate: verifies all reports exist before delivery
-└── README.md                   # You're here
+│   ├── harness_auditor.py          # 最终闸门 (--pipeline l1/l2/l3)
+│   ├── validate_debate_output.py   # 节点门1
+│   ├── check_testability.py        # 节点门2
+│   └── validate_execution_manifest.py  # 节点门3
+├── pipelines/                      # v3.0 管道配置
+│   ├── l1-light.md
+│   ├── l2-standard.md
+│   └── l3-full.md
+└── README.md                       # You're here
 ```
 
 ---
@@ -105,23 +133,23 @@ one-person-company/
 ### Module 1: Requirement Clarification (Red-Blue Debate)
 ### 模块一：需求澄清（红蓝对抗）
 
-Before any code, stress-test the spec. Blue builds the plan. Red attacks every edge case (network failure, empty input, race conditions). Analyst fact-checks disputes. Judge converges within 3 rounds. **Simple projects skip debate but still go through SpecGenerator.**
+Before any code, stress-test the spec. Blue builds the plan. Red attacks every edge case (network failure, empty input, race conditions). Analyst fact-checks disputes. Judge converges within 3 rounds. Output: JSON schema-validated debate result → 节点门1/2 check.
 
-写代码前先拷问需求。蓝队构建方案，红队攻击边界条件，分析师核查事实分歧，裁判 3 轮内收敛。简单项目跳过辩论，但仍走规范生成。
+写代码前先拷问需求。蓝队构建方案，红队攻击边界条件，分析师核查事实分歧，裁判 3 轮内收敛。输出经 JSON schema 校验的辩论结果 → 节点门1/2检查。
 
 ### Module 2: Test-Driven Development
 ### 模块二：测试驱动开发
 
-Integration tests + E2E tests are mandatory. Code QA runs integration tests first. Func QA runs E2E tests + browser walkthrough (for UI products). Both reports must exist. **Auditor script verifies all reports before delivery — no reports, no release.**
+Receives ~200 token execution manifest (not full spec). Code QA runs integration tests first. Func QA runs E2E tests + browser walkthrough (for UI products). Both reports must exist. Multiple agents collaborate — developer writes, QA reviews independently. **Auditor script verifies all reports before delivery — no reports, no release.**
 
-集成测试 + 端到端测试强制必过。代码验收先跑集成测试，功能验收跑端到端测试 + 浏览器实操。两份报告缺一不可。**审计脚本验证所有报告存在后才放行。**
+接收 ~200 token 执行清单（非完整 spec）。代码验收先跑集成测试，功能验收跑端到端测试 + 浏览器实操。多 Agent 合作——开发写、验收独立审。**审计脚本验证所有报告存在后才放行。**
 
 ### Module 3: Retrospective & Constitution
 ### 模块三：复盘与宪法
 
-After delivery, optionally run a retro debate: prosecution argues "this was preventable" vs defense argues "one-time event." If preventable, a rule is written into the Management Constitution and auto-injected into future agent prompts. Violations accumulate: 3rd = special warning, 5th = severe warning.
+After delivery, optionally run a retro debate (L3: mandatory reminder, skippable). If preventable, AI drafts a rule to proposals.md. User approves → merges into constitution. Constitution auto-injected into future prompts. Violations accumulate: 3rd = special warning, 5th = severe warning.
 
-交付后可选复盘辩论。可预防的问题写入管理宪法，下次自动注入 Agent 提示词。违规累计：第 3 次追加特别提醒，第 5 次严重警告。
+交付后可选择复盘辩论（L3：强制提醒但可跳过）。可预防问题由 AI 起草规则到 proposals.md，用户确认后合并进宪法。宪法自动注入后续提示词。违规累计：第 3 次特别提醒，第 5 次严重警告。
 
 ---
 
@@ -160,8 +188,8 @@ A: Currently implemented on these two, but the harness is platform-agnostic text
 目前基于这两个平台，Harness 是平台无关的纯文本规则，可移植。
 
 **Q: What projects fit?**
-A: Projects with clear-ish requirements and quality demands. Personal tools to multi-module apps. NOT for one-off 10-line scripts.
-需求相对明确、对质量有要求的项目。不适合一次性脚本。
+A: Projects with clear-ish requirements and quality demands. Personal tools to multi-module apps. Now with L1 pipeline for small scripts (≤3 files, single tech stack). NOT for throwaway one-liners.
+需求相对明确、对质量有要求的项目。现在 L1 管道支持小脚本（≤3 文件，单一技术栈）。不适合一次性单行命令。
 
 **Q: Why "One-Person Company"? / 为什么叫"一人公司"？**
 A: You + an AI team = a company. You're the CEO. Hermes is your chief of staff. Codex is your engineering department.
@@ -171,9 +199,13 @@ A: You + an AI team = a company. You're the CEO. Hermes is your chief of staff. 
 
 ## Roadmap / 后续计划
 
-- Lightweight automated visual acceptance for frontend
-- Skill templates for more project types
-- Community-shared constitution rules
+- [x] JSON 标准接口 (v3.0)
+- [x] 信息瓶颈 ~200 token (v3.0)
+- [x] 三级管道 L1/L2/L3 (v3.0)
+- [x] 节点门 + 宪法半自动 (v3.0)
+- [ ] Lightweight automated visual acceptance for frontend
+- [ ] Skill templates for more project types
+- [ ] Community-shared constitution rules
 
 ---
 
