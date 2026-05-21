@@ -1,0 +1,14 @@
+name: Harness CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print audit placeholder
+        run: echo "CI placeholder — full auditor integration deferred to v3.1"
