@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "辩论输出 JSON Schema",
+  "description": "辩论裁判→裁决Agent→规范生成 的跨模块JSON接口",
+  "type": "object",
+  "required": ["verified_items", "must_fix", "rejected_challenges", "rounds_completed", "converged"],
+  "properties": {
+    "verified_items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["描述", "验证方式"],
+        "properties": {
+          "描述": {"type": "string", "maxLength": 200},
+          "验证方式": {"type": "string", "maxLength": 200}
+        }
+      }
+    },
+    "must_fix": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["描述", "严重程度"],
+        "properties": {
+          "描述": {"type": "string", "maxLength": 200},
+          "严重程度": {"type": "string", "enum": ["critical", "major", "minor"]}
+        }
+      }
+    },
+    "suggested_optimizations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["描述"],
+        "properties": {
+          "描述": {"type": "string", "maxLength": 200}
+        }
+      }
+    },
+    "rejected_challenges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["挑战", "驳回理由"],
+        "properties": {
+          "挑战": {"type": "string", "maxLength": 200},
+          "驳回理由": {"type": "string", "maxLength": 200}
+        }
+      }
+    },
+    "rounds_completed": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3
+    },
+    "converged": {
+      "type": "boolean"
+    }
+  }
+}
