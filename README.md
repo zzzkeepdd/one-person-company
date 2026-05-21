@@ -28,6 +28,21 @@ Throwing requirements directly at AI gets you code — and hallucinations, skipp
 
 ---
 
+## Skill vs Harness — What's the difference? / 和普通 Skill 有什么区别？
+
+A **Skill** is a long document the AI reads once and may selectively ignore — like an employee handbook left on a desk. A **Harness** is a pipeline where each stage loads only the current step's instructions. The AI doesn't know what comes next, so it can't skip ahead. Paired with the auditor script, no deliverable = no green light.
+
+**Skill** 是一份长文档，AI 一次性读完，可以选择性忽略——像桌上摆的员工手册。**Harness** 每个阶段只加载当前步骤的指令，AI 不知道下一步是什么，无法跳步。配合审计脚本，不产出交付物就不放行。
+
+| | Skill | Harness |
+|---|-------|---------|
+| Structure | One long file | Entry (40 lines) + 25 focused files |
+| AI sees | Everything at once | Only the current stage |
+| Enforcement | Self-discipline | Hard gates + auditor script |
+| Skip possible? | Yes — AI can "understand" and jump | No — only current step's instructions exist |
+
+---
+
 ## Architecture / 架构
 
 ```
