@@ -1,4 +1,4 @@
-# 一人公司 Harness v3.0 (One-Person Company)
+# 一人公司 Harness v3.1 (One-Person Company)
 
 > A reusable AI collaboration harness that makes Hermes + Codex work like a real dev team.
 > 一个可复用的 AI 协作编排框架，让你的 Hermes + Codex 像一支真正的开发团队那样工作。
@@ -7,15 +7,25 @@
 
 ---
 
-## v3.0 Highlights / 亮点
+## v3.1 Highlights / 亮点
 
 | Feature | What |
 |---------|------|
+| **维度拆分 + 并行辩论** | 需求拆分为 3-7 独立维度，每个维度独立子Agent并行辩论——防 AI 注意力偏斜遗漏 |
+| **攻击点评分** | 每攻击点打分（1擦边球→5颠覆），至少 1 条直击核心（≥3分），硬计数不可水 |
+| **领域模板** | 量化平台/Web全栈/CLI工具/数据管道 四套维度模板——笼统需求自动注入默认值，改错优于填空 |
 | **JSON 标准接口** | 模块间强制 JSON schema，辩论输出 + 执行清单双校验 |
 | **信息瓶颈** | 模块一→模块二只传 ~200 token JSON，按需回查 spec |
 | **三级管道 (L1/L2/L3)** | L1 超轻（Hermes直写不调Codex）→ L2 辩论1轮 → L3 完整流程 |
-| **节点门** | 辩论结束/规范生成/验收结束三处硬闸门，不通过不进下一阶段 |
-| **宪法 v1.3** | 原子组保护 + 半自动草案生成 + M01 immutable + C10 多Agent合作强制 |
+| **节点门 + 宪法 v1.4** | 五道硬闸门 + C11 维度强制覆盖 + 半自动草案生成 |
+
+---
+
+## v3.0 → v3.1 改进动机
+
+v3.0 的模块一仍是串行辩论——所有需求维度混在一起，AI 注意力被"有趣"维度（策略逻辑/AI信号）抢走，跳过"无聊但关键"的维度（本金输入框/风控滑块），导致 V4 量化平台遗漏两个明确需求。
+
+v3.1 解法：维度拆分 + 并行辩论 + 攻击点评分。每个维度独立子Agent只处理一亩三分地，不会被其他维度抢注意力。攻击点硬计数+评分防"水"攻击点。笼统需求匹配领域模板注入默认值。
 
 ---
 
@@ -38,6 +48,9 @@ Throwing requirements directly at AI gets you code — and hallucinations, skipp
 > Fight ambiguity with determinism. Constrain freedom with boundaries. Prevent hallucinations with rules.
 > 用确定性对抗模糊，用边界约束自由，用规则防止幻觉。
 
+> Real Harness ≠ 墙上守则。真正的 Harness 是流水线上的感应器和挡板——不靠 AI 自觉，靠硬性验证。
+> A real harness isn't a poster on the wall. It's sensors and gates on the assembly line — not relying on AI self-discipline, but on hard verification.
+
 ---
 
 ## Skill vs Harness — What's the difference? / 和普通 Skill 有什么区别？
@@ -59,11 +72,18 @@ A **Skill** is a long document the AI reads once and may selectively ignore — 
 
 ```
 User / 用户
+├── Domain Template Match ── 领域模板注入默认值 (v3.1)
 ├── PlannerAgent ──── Pre-clarification ──── QA rounds until ready
-│      ├── DebateJudge + Red + Blue + Analyst ── Module 1
-│      │      ├── validate_debate_output.py (节点门1: JSON schema)
-│      │      └── check_testability.py (节点门2: 验收标准可测性)
-│      └── SpecGenerator ── Spec + Acceptance Criteria
+├── Dimension Split ── 3-7 独立维度 (v3.1)
+│      ├── [维度1] delegate_task → 子Agent A (红蓝+裁判+评分)
+│      ├── [维度2] delegate_task → 子Agent B
+│      ├── [维度3] delegate_task → 子Agent C
+│      ├── [维度4] delegate_task → 子Agent D
+│      └── [维度5] delegate_task → 子Agent E
+├── Dimension Aggregation ── 聚合+跨维度冲突检查 (v3.1)
+│      ├── validate_debate_output.py (节点门1: JSON schema + 维度覆盖 + 攻击点评分)
+│      └── check_testability.py (节点门2: 验收标准可测性)
+├── SpecGenerator ── Spec + Acceptance Criteria
 ├── Codex Dev Team ── TDD ──── AI Programmer + Executor + Frontend
 │      ├── validate_execution_manifest.py (节点门3: 执行清单校验)
 │      ├── Code QA (integration tests)
@@ -105,18 +125,19 @@ cp -r one-person-company ~/.hermes/skills/
 one-person-company/
 ├── SKILL.md                        # Entry — 3-step dispatch (≤40 lines)
 ├── schemas/                        # v3.0 JSON 接口定义
-│   ├── debate-output.schema.json
+│   ├── debate-output.schema.json   # v3.1: +dimensions_covered +attacks
 │   └── execution-manifest.schema.json
 ├── references/
 │   ├── agent-roster/               # 14 agent prompts + rules + red lines
 │   ├── workflows/                  # Module 1-3 step-by-step flows
 │   ├── protocols/                  # Communication, lifecycle, handover
+│   ├── domain-templates.md         # v3.1: 领域维度模板（量化/Web/CLI/ETL）
 │   ├── data-contract.md            # v3.0 JSON 接口数据契约
 │   ├── vague-words.txt             # v3.0 模糊词黑名单
 │   └── constitution/               # Management rules + proposals.md
 ├── scripts/
 │   ├── harness_auditor.py          # 最终闸门 (--pipeline l1/l2/l3)
-│   ├── validate_debate_output.py   # 节点门1
+│   ├── validate_debate_output.py   # 节点门1 (v3.1: +维度覆盖+攻击点评分)
 │   ├── check_testability.py        # 节点门2
 │   └── validate_execution_manifest.py  # 节点门3
 ├── pipelines/                      # v3.0 管道配置
@@ -132,6 +153,8 @@ one-person-company/
 
 ### Module 1: Requirement Clarification (Red-Blue Debate)
 ### 模块一：需求澄清（红蓝对抗）
+
+**v3.1: 维度拆分 + 并行辩论。** 预澄清后按领域模板拆分为 3-7 个独立维度，每个维度启动独立子Agent并行辩论。子Agent只处理本维度——不被其他维度抢注意力。攻击点硬计数（≥维度数×2）+ 评分（至少1条≥3分直击核心）。维度聚合时检查跨维度冲突。
 
 Before any code, stress-test the spec. Blue builds the plan. Red attacks every edge case (network failure, empty input, race conditions). Analyst fact-checks disputes. Judge converges within 3 rounds. Output: JSON schema-validated debate result → 节点门1/2 check.
 
@@ -163,6 +186,7 @@ After delivery, optionally run a retro debate (L3: mandatory reminder, skippable
 | 4 | **UX products need browser-level testing.** `subprocess.run(['mdblog', 'build'])` != a real user clicking links in a browser. Func QA now requires browser automation walkthroughs for UI products. |
 | 5 | **Complexity grading needs a "user-visible" dimension.** If a human sees the output in a browser, it's at least medium — no shortcuts on acceptance. |
 | 6 | **No deliverable + no verifier = soft suggestion, not a rule.** Every rule in the harness now requires a concrete deliverable and verification method (Meta-Rule M01). |
+| 7 | **Serial debate loses boring-but-critical requirements.** AI attention is captured by "interesting" dimensions (strategy logic, AI signals) and silently skips "boring" ones (input boxes, sliders). Solution: dimension split + parallel sub-agents per dimension (v3.1). |
 
 ---
 
@@ -203,6 +227,7 @@ A: You + an AI team = a company. You're the CEO. Hermes is your chief of staff. 
 - [x] 信息瓶颈 ~200 token (v3.0)
 - [x] 三级管道 L1/L2/L3 (v3.0)
 - [x] 节点门 + 宪法半自动 (v3.0)
+- [x] 维度拆分 + 并行辩论 + 攻击点评分 (v3.1)
 - [ ] Lightweight automated visual acceptance for frontend
 - [ ] Skill templates for more project types
 - [ ] Community-shared constitution rules
