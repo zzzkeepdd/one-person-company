@@ -1,0 +1,1 @@
+/workspace/trae-harness/references/constitution/full-constitution.md
