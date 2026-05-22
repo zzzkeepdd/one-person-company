@@ -1,187 +1,208 @@
-# 一人公司 (One-Person Company)
-
-> A reusable AI collaboration harness that makes Hermes + Codex work like a real dev team.
-> 一个可复用的 AI 协作编排框架，让你的 Hermes + Codex 像一支真正的开发团队那样工作。
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
----
-
-## Why / 为什么
-
-Throwing requirements directly at AI gets you code — and hallucinations, skipped tests, and unchecked edge cases. "One-Person Company" is a battle-tested multi-agent harness that doesn't write code. It *manages* the AI that writes code, through three mandatory phases:
-
-直接把需求丢给 AI，它会写代码，但也会幻觉、跳测试、自由发挥。"一人公司"不写代码，它**管理写代码的 AI**，通过三个强制阶段：
-
-| Phase | What / 内容 |
-|-------|-------------|
-| **Red-Blue Debate (红蓝对抗)** | Attack the spec before a line of code exists — find holes, not after |
-| **Test-Driven Development** | Integration + E2E tests are the only definition of "done" |
-| **Retrospective + Constitution (复盘宪法)** | Every failure writes a rule. Violations accumulate consequences. |
-
----
-
-## Philosophy / 核心哲学
-
-> Fight ambiguity with determinism. Constrain freedom with boundaries. Prevent hallucinations with rules.
-> 用确定性对抗模糊，用边界约束自由，用规则防止幻觉。
-
----
-
-## Skill vs Harness — What's the difference? / 和普通 Skill 有什么区别？
-
-A **Skill** is a long document the AI reads once and may selectively ignore — like an employee handbook left on a desk. A **Harness** is a pipeline where each stage loads only the current step's instructions. The AI doesn't know what comes next, so it can't skip ahead. Paired with the auditor script, no deliverable = no green light.
-
-**Skill** 是一份长文档，AI 一次性读完，可以选择性忽略——像桌上摆的员工手册。**Harness** 每个阶段只加载当前步骤的指令，AI 不知道下一步是什么，无法跳步。配合审计脚本，不产出交付物就不放行。
-
-| | Skill | Harness |
-|---|-------|---------|
-| Structure | One long file | Entry (40 lines) + 25 focused files |
-| AI sees | Everything at once | Only the current stage |
-| Enforcement | Self-discipline | Hard gates + auditor script |
-| Skip possible? | Yes — AI can "understand" and jump | No — only current step's instructions exist |
-
----
-
-## Architecture / 架构
-
-```
-User / 用户
-├── PlannerAgent ──── Pre-clarification ──── QA rounds until ready
-│      ├── DebateJudge + Red + Blue + Analyst ── Module 1
-│      └── SpecGenerator ── Spec + Acceptance Criteria
-├── Codex Dev Team ── TDD ──── AI Programmer + Executor + Frontend
-│      ├── Code QA (integration tests)
-│      └── Func QA (E2E tests + browser walkthrough)
-│      └── Auditor Script ── hard gate: all reports present?
-└── RetroJudge ── Retro Debate ── Prosecution vs Defense → Constitution update
-```
-
-Hermes (DeepSeek V4) plans and reviews. Codex (GPT-5.5) executes code. Connected via MCP protocol with shared project folder as state hub.
-
-Hermes (DeepSeek V4) 负责规划和审核，Codex (GPT-5.5) 负责代码执行。通过 MCP 协议连接，共享项目文件夹作为状态中枢。
-
-> Platform-agnostic pure-text methodology. Core rules work on any multi-agent or single-model setup.
-> 平台无关的纯文本方法论，核心规则可移植到任何多 Agent 或单一模型环境。
-
----
-
-## Quick Start / 快速开始
-
-**Prerequisites / 前置要求：** [Hermes](https://github.com/nousresearch/hermes) desktop + [Codex CLI](https://github.com/openai/codex) + MCP configured between them.
-[Hermes](https://github.com/nousresearch/hermes) 桌面端 + [Codex CLI](https://github.com/openai/codex) + 两者间配好 MCP。
-
-```bash
-# If using Hermes, place this under its skills directory
-# Hermes 用户：放到 skills 目录下
-cp -r one-person-company ~/.hermes/skills/
-
-# Or /new to reload. Then invoke:
-# 然后调用：
-"Hermes, 启动一人公司，我要开发一个 [your project]"
-```
-
----
-
-## Structure / 项目结构
-
-```
-one-person-company/
-├── SKILL.md                    # Entry — 3-step dispatch (≤40 lines)
-├── references/
-│   ├── agent-roster/           # 14 agent prompts + rules + red lines
-│   ├── workflows/              # Module 1-3 step-by-step flows
-│   ├── protocols/              # Communication, lifecycle, handover, cost budget, prerequisites
-│   └── constitution/           # Management rules + violation records (dynamic)
-├── scripts/
-│   └── harness_auditor.py      # Hard gate: verifies all reports exist before delivery
-└── README.md                   # You're here
-```
-
----
-
-## Three Modules / 三大模块
-
-### Module 1: Requirement Clarification (Red-Blue Debate)
-### 模块一：需求澄清（红蓝对抗）
-
-Before any code, stress-test the spec. Blue builds the plan. Red attacks every edge case (network failure, empty input, race conditions). Analyst fact-checks disputes. Judge converges within 3 rounds. **Simple projects skip debate but still go through SpecGenerator.**
-
-写代码前先拷问需求。蓝队构建方案，红队攻击边界条件，分析师核查事实分歧，裁判 3 轮内收敛。简单项目跳过辩论，但仍走规范生成。
-
-### Module 2: Test-Driven Development
-### 模块二：测试驱动开发
-
-Integration tests + E2E tests are mandatory. Code QA runs integration tests first. Func QA runs E2E tests + browser walkthrough (for UI products). Both reports must exist. **Auditor script verifies all reports before delivery — no reports, no release.**
-
-集成测试 + 端到端测试强制必过。代码验收先跑集成测试，功能验收跑端到端测试 + 浏览器实操。两份报告缺一不可。**审计脚本验证所有报告存在后才放行。**
-
-### Module 3: Retrospective & Constitution
-### 模块三：复盘与宪法
-
-After delivery, optionally run a retro debate: prosecution argues "this was preventable" vs defense argues "one-time event." If preventable, a rule is written into the Management Constitution and auto-injected into future agent prompts. Violations accumulate: 3rd = special warning, 5th = severe warning.
-
-交付后可选复盘辩论。可预防的问题写入管理宪法，下次自动注入 Agent 提示词。违规累计：第 3 次追加特别提醒，第 5 次严重警告。
-
----
-
-## Lessons Learned / 踩过的坑
-
-| # | Lesson / 教训 |
-|---|---------------|
-| 1 | **15 green tests ≠ working product.** Unit tests passed but templates weren't rendering, tags pages 404'd. Tests must verify *behavior*, not just file existence. |
-| 2 | **Agents skip the acceptance chain if allowed.** Hermes coordinator ran `pytest`, saw green, declared done — without ever calling code-qa or func-qa. Solution: hard gate (auditor script). |
-| 3 | **Retros can misdiagnose.** First retro blamed "external force" for a skipped acceptance chain. Retro judge must cross-check the acceptance reports, not just trust the surface story. |
-| 4 | **UX products need browser-level testing.** `subprocess.run(['mdblog', 'build'])` != a real user clicking links in a browser. Func QA now requires browser automation walkthroughs for UI products. |
-| 5 | **Complexity grading needs a "user-visible" dimension.** If a human sees the output in a browser, it's at least medium — no shortcuts on acceptance. |
-| 6 | **No deliverable + no verifier = soft suggestion, not a rule.** Every rule in the harness now requires a concrete deliverable and verification method (Meta-Rule M01). |
-
----
-
-## Human Touchpoints / 人机交互点
-
-The harness is mostly autonomous, but stops at 3 points for your input:
-大部分流程自动化，但会在 3 个节点停下等你：
-
-1. **Pre-clarification** — PlannerAgent asks 2-5 questions about your requirements / 计划Agent 提问澄清需求
-2. **Spec confirmation** — After debate + spec generation, you review and approve / 辩论后确认《需求规格说明书》
-3. **Retrospective** — After delivery, you decide whether to run a retro / 交付后你是否要复盘
-
----
-
-## FAQ
-
-**Q: Token cost?**
-A: Hermes side uses low-cost models (DeepSeek V4). Codex side uses high-capability (GPT-5.5). The debate's extra token spend reduces expensive downstream rework. Net positive on any project with >3 modules.
-Hermes 侧用低成本模型，Codex 侧用高能力模型。辩论增加的低成本 Token 能显著减少下游昂贵返工。
-
-**Q: Must I use Hermes + Codex?**
-A: Currently implemented on these two, but the harness is platform-agnostic text rules. Adaptable to any multi-agent or single-model environment.
-目前基于这两个平台，Harness 是平台无关的纯文本规则，可移植。
-
-**Q: What projects fit?**
-A: Projects with clear-ish requirements and quality demands. Personal tools to multi-module apps. NOT for one-off 10-line scripts.
-需求相对明确、对质量有要求的项目。不适合一次性脚本。
-
-**Q: Why "One-Person Company"? / 为什么叫"一人公司"？**
-A: You + an AI team = a company. You're the CEO. Hermes is your chief of staff. Codex is your engineering department.
-你一个人 + 一支 AI 团队 = 一家公司。
-
----
-
-## Roadmap / 后续计划
-
-- Lightweight automated visual acceptance for frontend
-- Skill templates for more project types
-- Community-shared constitution rules
-
----
-
-## License
-
-MIT
-
----
-
-If this saves you from the pits we fell into, give it a ⭐.
-如果这个项目帮你绕开了我们踩过的坑，给个 ⭐。
+     1|# 一人公司 Harness v4.0 (One-Person Company)
+     2|
+     3|> Codex Desktop 入口 + Hermes 后端。Codex 做编码和验收，Hermes 做记忆和裁决。
+     4|> Codex Desktop as entry point + Hermes as backend. Codex codes & verifies. Hermes remembers & judges.
+     5|
+     6|[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+     7|
+     8|---
+     9|
+    10|## v4.0 核心变化 / What Changed
+    11|
+    12|v3.x 是 Hermes 指挥 Codex——Hermes 做全部流程控制，Codex 被动执行，靠文件轮询通信（分钟级延迟）。
+    13|
+    14|v4.0 反转：Codex Desktop 作为用户入口，Hermes 作为 MCP 后端服务。毫秒级实时通信，8 个 Gate 硬约束。
+    15|
+    16|| | v3.x | v4.0 |
+    17||---|------|------|
+    18|| 入口 | Hermes 聊天窗口 | Codex Desktop |
+    19|| 通信 | 文件轮询（cronjob，~1min延迟） | MCP 协议（毫秒级） |
+    20|| 流程控制 | Hermes 全控 | Hermes 控模块一/三，Codex 控模块二 |
+    21|| Gate | 文档里的建议（88%被跳过） | Hermes 执行的硬约束（不可跳过） |
+    22|| 记忆 | Hermes 内部 | Hermes 内部，Codex 不可见 |
+    23|| 编码 | Codex 被动执行 | Codex 主动控制 TDD 全流程 |
+    24|
+    25|---
+    26|
+    27|## Why / 为什么
+    28|
+    29|直接把需求丢给 AI，它会写代码，但也会幻觉、跳测试、自由发挥。"一人公司"不写代码，它**管理写代码的 AI**。
+    30|
+    31|v2 实验数据：
+    32|- 无 Harness：测试通过率 92%，2 安全漏洞，1 功能 bug
+    33|- 有 Harness：测试通过率 99%，0 漏洞，0 功能 bug
+    34|- 辩论阶段发现的 24 个攻击点中，5 个被独立测试印证为真实可复现缺陷
+    35|
+    36|---
+    37|
+    38|## Architecture / 架构
+    39|
+    40|```
+    41|用户 (在 Codex Desktop 里说话)
+    42|  │
+    43|  ▼
+    44|┌──────────────────────────────────────┐
+    45|│          Codex Desktop               │
+    46|│  入口 + 模块二 (TDD编码+浏览器验收)   │
+    47|│                                      │
+    48|│  5 个 MCP Tool 调用 Hermes：          │
+    49|│    module_one_start → manifest       │
+    50|│    context → 记忆+踩坑               │
+    51|│    gate(G3-G6) → pass/fail           │
+    52|│    retrospect → 复盘归档              │
+    53|└──────────┬───────────────────────────┘
+    54|           │ MCP 协议 (stdio, 毫秒级)
+    55|           ▼
+    56|┌──────────────────────────────────────┐
+    57|│          Hermes (后端)               │
+    58|│  模块一 (需求澄清) + 模块三 (复盘)    │
+    59|│                                      │
+    60|│  内部能力：                           │
+    61|│    维度辩论 (红/蓝/裁判 3 角色)       │
+    62|│    长记忆 (跨会话)                    │
+    63|│    8 个 Gate 裁决                     │
+    64|│    宪法硬约束                         │
+    65|└──────────────────────────────────────┘
+    66|```
+    67|
+    68|**锚点：Codex 负责做事和采证。Hermes 负责记忆和裁决。**
+    69|
+    70|---
+    71|
+    72|## v1.0 实现状态
+    73|
+    74|| 能力 | 状态 |
+    75||------|------|
+    76|| module_one_start 返回 manifest | v1.0 简化版（不做完整红蓝辩论） |
+    77|| G1/G2 结构校验 | v1.0 |
+    78|| G3-G7 硬约束 | v1.0 |
+    79|| context 记忆检索 | v1.0 |
+    80|| retrospect 复盘+记忆写入 | v1.0 |
+    81|| 完整维度辩论+用户确认 | v1.1 规划 |
+    82|| Gate 规则自动进化 | v1.1 规划 |
+    83|
+    84|---
+    85|
+    86|## 8 个 Gate (全在 Hermes 执行)
+    87|
+    88|| Gate | 位置 | 检查 | fail 后果 |
+    89||------|------|------|-----------|
+    90|| G1 | 辩论后 | 攻击点≥维度数×2，≥1个≥3分 | 回退补辩论 |
+    91|| G2 | 规范后 | 无模糊词，testable有对应测试 | 回退修规范 |
+    92|| G3 | 写测试后 | 测试文件存在+能运行 | 回退写测试 |
+    93|| G4 | 写实现后 | 所有测试通过+lint无新增 | 回退修复 |
+    94|| G5 | 全部task后 | 每task有G3+G4记录 | 回退处理 |
+    95|| G6 | 验收后 | ≥3页截图+深浅主题+375px | 回退补充 |
+    96|| G7 | 复盘后 | 偏差非空+≥1教训+宪法记录 | 回退补充 |
+    97|
+    98|Gate 铁律：检查逻辑在 Hermes 内部，Codex 不知道规则细节。fail 只返回"哪里不满足"，不说"怎么修"。用户"只要结果"跳过确认门，但不降任何 Gate 标准。
+    99|
+   100|---
+   101|
+   102|## Quick Start / 快速开始
+   103|
+   104|**前置要求：** Hermes + Codex CLI + MCP 配置
+   105|
+   106|```bash
+   107|# 1. 添加 Hermes Harness MCP server 到 Codex
+   108|codex mcp add hermes-harness -- \
+   109|  C:\Users\Administrator\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe \
+   110|  C:\Users\Administrator\AppData\Local\hermes\hermes-agent\harness_mcp_server.py
+   111|
+   112|# 2. 把 Codex workflow skill 放到 Codex 配置目录
+   113|cp codex-harness-workflow/SKILL.md ~/.codex/AGENTS.md
+   114|
+   115|# 3. 重启 Codex Desktop
+   116|# 4. 在 Codex 里说需求，自动走闭环
+   117|```
+   118|
+   119|---
+   120|
+   121|## 执行闭环 / Execution Loop
+   122|
+   123|```
+   124|用户需求
+   125|→ Codex 调 module_one_start(requirement, user_mode)
+   126|→ Hermes 返回 manifest
+   127|→ Codex 按 manifest.tasks 逐个执行 TDD
+   128|→ 每个 task 前调 context(task)
+   129|→ RED 写测试 → 调 gate("G3")
+   130|→ GREEN 写实现 → 调 gate("G4")
+   131|→ 全部 task 完成 → 调 gate("G5")
+   132|→ 浏览器验收 → 调 gate("G6")
+   133|→ 调 retrospect(manifest, audit_trail, acceptance_report)
+   134|→ Hermes 写入长期记忆 + 返回 lesson_summary
+   135|→ Codex 展示 lesson_summary 给用户
+   136|```
+   137|
+   138|---
+   139|
+   140|## 5 个 MCP Tool
+   141|
+   142|| Tool | 签名 | 返回 |
+   143||------|------|------|
+   144|| module_one_start | (requirement, user_mode) | {status:"ready", manifest, complexity} |
+   145|| module_one_respond | (feedback, user_mode) | {status, manifest} |
+   146|| context | (task_description, task_id) | {memories[], pitfalls[], rules[]} |
+   147|| gate | (gate_id, evidence) | {pass, reason, required_fix} |
+   148|| retrospect | (manifest, audit_trail, acceptance_report) | {summary, lesson_summary, violations} |
+   149|
+   150|---
+   151|
+   152|## 模块边界
+   153|
+   154|- Hermes 不写代码，不直接改项目文件，不执行测试，不操作浏览器。
+   155|- Codex 不保留长期记忆，不修改 Gate 规则，不裁决自己是否通过 Gate。
+   156|- Codex 内部 subagent 不对 Hermes 暴露。
+   157|- Hermes 只能通过 Codex 提交的 evidence/audit_trail/acceptance_report 观察执行结果。
+   158|
+   159|---
+   160|
+   161|## Trae 实验数据 / Experiment Results
+   162|
+   163|v2 独立测试（消除循环论证）：
+   164|
+   165|| | A组 (无 Harness) | B组 (Harness) | 差值 |
+   166||---|----|----|------|
+   167|| 测试通过率 | 92% | 99% | +6% |
+   168|| 功能性 bug | 1 | 0 | -1 |
+   169|| 安全漏洞 | 2 | 0 | -2 |
+   170|| 核心功能缺失 | 1 | 0 | -1 |
+   171|
+   172|辩论阶段 24 个攻击点中，v2 测试印证 5 个为真实可复现缺陷。
+   173|
+   174|---
+   175|
+   176|## 踩过的坑 / Lessons Learned
+   177|
+   178|1. 88% 的 Phase 在真实执行中被跳过——因为门是文档不是 tool。v4.0：全部 Gate 由 Hermes 硬执行。
+   179|2. 单 Agent 内化毁了对抗性。v4.0：红/蓝/裁判用不同 system prompt，Hermes 和 Codex 天然盲区。
+   180|3. 用户说"只要结果"→ 全部防御崩塌。v4.0：L2 保障模式，保留全部 Gate。
+   181|4. 验证脚本只检查格式不检查实质。v4.0：G4 检查测试是否通过，G6 检查截图数量。
+   182|5. 测试先行原则从未遵守。v4.0：G3 检查测试文件存在，不通过拒绝 code-qa。
+   183|6. 复盘从未触发。v4.0：retrospect 是闭环最后一步，G7 检查复盘产出。
+   184|
+   185|---
+   186|
+   187|## FAQ
+   188|
+   189|**Q: Token 成本？**
+   190|A: Hermes 侧用低成本模型，Codex 侧用高能力模型。辩论增加的低成本 Token 显著减少下游昂贵返工。
+   191|
+   192|**Q: 必须用 Hermes + Codex？**
+   193|A: 当前基于这两个平台，但 Harness 是平台无关的纯文本规则，可移植。
+   194|
+   195|**Q: 为什么叫"一人公司"？**
+   196|A: 你一个人 + 一支 AI 团队 = 一家公司。你是 CEO，Hermes 是参谋长，Codex 是工程部。
+   197|
+   198|---
+   199|
+   200|## License
+   201|
+   202|MIT
+   203|
+   204|---
+   205|
+   206|如果这个项目帮你绕开了我们踩过的坑，给个 ⭐。
+   207|If this saves you from the pits we fell into, give it a ⭐.
+   208|

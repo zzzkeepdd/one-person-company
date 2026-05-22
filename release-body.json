@@ -1,0 +1,7 @@
+{
+  "tag_name": "v1.0",
+  "name": "v1.0 - Initial Release",
+  "body": "## One-Person Company v1.0\n\nFirst public release of the multi-agent collaboration harness.\n\n### Core Modules\n\n- **Red-Blue Debate (红蓝对抗)** — Attack the spec before any code exists. Red team finds edge cases, Blue team builds solutions, Analyst verifies facts, Debate Judge converges disputes. 3-round max.\n- **Test-Driven Development** — Integration + e2e tests are mandatory deliverables. Code QA + Function QA + audit script form an unskippable acceptance chain. Dev coordinator demoted from judge to dispatcher.\n- **Retrospective & Constitution (复盘宪法)** — After delivery, prosecution vs defense debate classifies every failure. Process violations auto-deposit into management constitution. 3 strikes = warning, 5 = severe.\n\n### Key Features\n\n- Complexity grading with \"user-visible product\" safety net\n- Audit script (harness_auditor.py) blocks delivery if reports are missing\n- Browser-side QA: link clicking, dark/light switch, 375px mobile resize\n- MCP sandbox support for Codex on Windows\n- Layered constitution injection per role\n- 26 files, all under 43 lines — fits in AI attention span\n\n### Stack\n\n- Planning: Hermes (DeepSeek V4)\n- Coding: Codex (GPT-5.5)\n- Protocol: MCP\n\n### Install\n\n```bash\ncd ~/.hermes/skills/\ngit clone https://github.com/zzzkeepdd/one-person-company.git\n```\n\nThen: \"Hermes, 启动一人公司，我要开发一个 XX\"",
+  "draft": false,
+  "prerelease": false
+}
