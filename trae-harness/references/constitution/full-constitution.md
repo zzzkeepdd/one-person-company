@@ -37,7 +37,9 @@
 | C23 | 开发Agent只知本任务，不知道code-qa和func-qa存在。 | 开发Agent | step-isolation |
 | C24 | code-qa Agent只知验收当前代码，不知道func-qa存在。 | code-qa | step-isolation |
 | C25 | func-qa Agent（GLM-5V）只知验收，不知道前面步骤细节。 | func-qa | step-isolation |
+| C26 | 仓库基础结构完整性：创建新仓库时，必须同步复制所有schema文件（debate-output.schema.json、execution-manifest.schema.json）和必要脚本（validate_debate_output.py等）。不得遗漏。 | Trae统筹 | repository-integrity |
 
 ## 修订记录
 
 - v1.0: 初始规则 — 2026-05-22
+- v1.1: 新增C26仓库基础结构完整性规则 — 2026-05-22（todo-api项目复盘）
