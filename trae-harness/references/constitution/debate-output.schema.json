@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "辩论输出 JSON Schema v3.1",
+  "description": "辩论裁判→裁决Agent→规范生成 的跨模块JSON接口。v3.1 新增维度覆盖+攻击点评分。",
+  "type": "object",
+  "required": ["verified_items", "must_fix", "rejected_challenges", "rounds_completed", "converged", "dimensions_covered", "attacks"],
+  "properties": {
+    "verified_items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["描述", "验证方式"],
+        "properties": {
+          "描述": {"type": "string", "maxLength": 200},
+          "验证方式": {"type": "string", "maxLength": 200}
+        }
+      }
+    },
+    "must_fix": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["描述", "严重程度"],
+        "properties": {
+          "描述": {"type": "string", "maxLength": 200},
+          "严重程度": {"type": "string", "enum": ["critical", "major", "minor"]}
+        }
+      }
+    },
+    "suggested_optimizations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["描述"],
+        "properties": {
+          "描述": {"type": "string", "maxLength": 200}
+        }
+      }
+    },
+    "rejected_challenges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["挑战", "驳回理由"],
+        "properties": {
+          "挑战": {"type": "string", "maxLength": 200},
+          "驳回理由": {"type": "string", "maxLength": 200}
+        }
+      }
+    },
+    "rounds_completed": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3
+    },
+    "converged": {
+      "type": "boolean"
+    },
+    "dimensions_covered": {
+      "type": "array",
+      "minItems": 1,
+      "description": "v3.1：维度覆盖表——每个维度标注覆盖状态",
+      "items": {
+        "type": "object",
+        "required": ["name", "status"],
+        "properties": {
+          "name": {"type": "string", "maxLength": 50, "description": "维度名称，如 策略层/资金层/风控层"},
+          "status": {"type": "string", "enum": ["covered", "partial", "uncovered"], "description": "覆盖状态"},
+          "must_fix_count": {"type": "integer", "minimum": 0, "description": "该维度 must_fix 数量"},
+          "attack_count": {"type": "integer", "minimum": 0, "description": "该维度攻击点数量"}
+        }
+      }
+    },
+    "dimension_count": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "v3.1：维度拆分表中的维度总数，用于覆盖率计算"
+    },
+    "attacks": {
+      "type": "array",
+      "minItems": 1,
+      "description": "v3.1：攻击点列表（含评分，至少1条score≥3）",
+      "items": {
+        "type": "object",
+        "required": ["描述", "target_dimension", "score"],
+        "properties": {
+          "描述": {"type": "string", "maxLength": 200},
+          "target_dimension": {"type": "string", "maxLength": 50},
+          "score": {"type": "integer", "minimum": 1, "maximum": 5, "description": "1擦边球 2边缘 3直击核心 4致命 5颠覆"},
+          "scoring_rationale": {"type": "string", "maxLength": 100}
+        }
+      }
+    }
+  }
+}

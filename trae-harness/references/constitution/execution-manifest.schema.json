@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "执行清单 JSON Schema",
+  "description": "模块一→模块二 的跨模块JSON接口（信息瓶颈载体）",
+  "type": "object",
+  "required": ["tasks", "acceptance_criteria", "environment", "risk_level", "full_spec_path", "spec_checksum"],
+  "properties": {
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "描述", "验收标准ID", "文件范围", "任务类型"],
+        "properties": {
+          "id": {"type": "string"},
+          "描述": {"type": "string", "maxLength": 100},
+          "验收标准ID": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string"}
+          },
+          "文件范围": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string"}
+          },
+          "任务类型": {"type": "string", "enum": ["new", "modify", "delete"]}
+        }
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "摘要", "判定方式"],
+        "properties": {
+          "id": {"type": "string"},
+          "摘要": {"type": "string", "maxLength": 60},
+          "判定方式": {"type": "string", "enum": ["boolean", "numeric", "state_check"]}
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": ["端口", "依赖", "运行时"],
+      "properties": {
+        "端口": {"type": "integer", "minimum": 1, "maximum": 65535},
+        "依赖": {"type": "array", "items": {"type": "string"}},
+        "运行时": {"type": "string", "enum": ["node", "python", "static"]}
+      }
+    },
+    "risk_level": {"type": "string", "enum": ["L1", "L2", "L3"]},
+    "full_spec_path": {"type": "string", "minLength": 1},
+    "spec_checksum": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
